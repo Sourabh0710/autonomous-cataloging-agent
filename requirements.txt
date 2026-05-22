@@ -1,0 +1,9 @@
+langgraph
+langchain
+langchain-core
+langchain-groq
+pandas
+openpyxl
+pydantic
+python-dotenv
+tabulate
