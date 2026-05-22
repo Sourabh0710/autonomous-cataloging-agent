@@ -12,11 +12,13 @@ This project implements an intelligent cataloging workflow capable of:
 - Dynamically understanding vendor schemas
 - Semantically mapping fields to a standardized schema
 - Enriching missing attributes using LLM reasoning
+- Prioritizing the correct transactional pricing field
 - Exporting normalized CSV outputs
 - Executing through a stateful autonomous workflow using LangGraph
 
-Unlike traditional ETL pipelines, this system does not rely on hardcoded column mappings or fixed workflows.  
-The agent autonomously decides how vendor fields should be interpreted and transformed.
+Unlike traditional ETL pipelines, this system does not rely on hardcoded column mappings or fixed workflows.
+
+When multiple pricing representations exist (e.g., MRP and selling price), the agent intelligently prioritizes the commercially relevant transactional price (`selling_price`) while using MRP as a fallback.
 
 ---
 
@@ -38,9 +40,20 @@ Example:
 
 | Vendor Column | Standardized Field |
 |---|---|
-| mrp | price |
+| selling_price | price |
 | main_image_url | image_url_1 |
 | image_2 | image_url_2 |
+
+---
+
+## Intelligent Price Resolution
+
+When multiple pricing fields are present, the agent semantically prioritizes:
+
+- `selling_price` → preferred transactional price
+- `mrp` → fallback reference price
+
+This mirrors real-world ecommerce catalog normalization behavior.
 
 ---
 
@@ -92,6 +105,8 @@ Vendor Excel File
 Excel Inspection Tool
         ↓
 LLM Schema Mapping Agent
+        ↓
+Price Resolution Logic
         ↓
 Product Transformation
         ↓
@@ -149,7 +164,8 @@ catalog_agent/
 ├── main.py
 ├── requirements.txt
 ├── README.md
-└── .env.example
+├── .env.example
+└── .gitignore
 ```
 
 ---
@@ -174,19 +190,30 @@ No hardcoded mappings are used.
 
 ---
 
-## 3. Product Transformation
+## 3. Intelligent Price Resolution
+
+If both `selling_price` and `mrp` are available:
+
+- `selling_price` is used as the standardized `price`
+- `mrp` is retained as fallback logic
+
+This reflects real-world ecommerce pricing semantics.
+
+---
+
+## 4. Product Transformation
 
 Rows are normalized into structured product objects.
 
 ---
 
-## 4. Metadata Enrichment
+## 5. Metadata Enrichment
 
 Missing attributes are inferred using semantic extraction.
 
 ---
 
-## 5. CSV Export
+## 6. CSV Export
 
 The final normalized catalog is exported automatically.
 
@@ -199,6 +226,7 @@ This system was intentionally designed as an autonomous reasoning agent rather t
 The agent:
 - interprets unknown schemas
 - selects mappings dynamically
+- resolves pricing ambiguity intelligently
 - enriches incomplete metadata
 - orchestrates tool execution through LangGraph
 
@@ -286,6 +314,8 @@ python main.py
 
 [AGENT] Generating schema mapping...
 
+[AGENT] Using selling_price as transactional price.
+
 [AGENT] Transforming products...
 
 [AGENT] Exporting standardized catalog...
@@ -307,6 +337,7 @@ outputs/standardized_catalog.csv
 
 - Dynamic vendor schemas
 - Non-standard column naming
+- Multiple pricing representations (MRP vs selling price)
 - Missing metadata
 - Schema normalization
 - Autonomous orchestration
